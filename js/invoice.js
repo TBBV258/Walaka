@@ -1239,8 +1239,8 @@ function setupTableFilters() {
 
             const { data: clients, error } = await window.supabase
                 .from('clients')
-                .select('customer_id, company_name')
-                .order('company_name', { ascending: true });
+                .select('customer_id, customer_name')
+                .order('customer_name', { ascending: true });
 
             if (error) throw error;
 
