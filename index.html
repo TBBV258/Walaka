@@ -1016,3 +1016,65 @@
                     <div class="form-group">
                         <label for="companySize">Company Size</label>
                         <select id="companySize" required>
+                            <option value="1-10">1-10 employees</option>
+                            <option value="11-50">11-50 employees</option>
+                            <option value="51-200">51-200 employees</option>
+                            <option value="201+">201+ employees</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="logo">Company Logo</label>
+                        <input type="file" id="logo" accept="image/*">
+                    </div>
+                    <div class="button-group">
+                        <button type="button" class="back-btn">Back</button>
+                        <button type="submit" class="next-btn">Continue</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Step 3: Document Setup -->
+            <div class="step-content" id="step3">
+                <h2>Document Setup</h2>
+                <form id="documentForm">
+                    <div class="form-group">
+                        <label>Invoice Template</label>
+                        <div class="template-grid">
+                            <!-- Templates will be populated by JS -->
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="colorTheme">Color Theme</label>
+                        <div class="color-picker">
+                            <!-- Color options will be populated by JS -->
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="invoicePrefix">Invoice Number Format</label>
+                        <input type="text" id="invoicePrefix" placeholder="INV-{YEAR}-{NUMBER}" required>
+                    </div>
+                    <div class="button-group">
+                        <button type="button" class="back-btn">Back</button>
+                        <button type="submit" class="next-btn">Continue</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Step 4: Completion -->
+            <div class="step-content" id="step4">
+                <div class="completion-message">
+                    <i class="fas fa-check-circle"></i>
+                    <h2>Setup Complete!</h2>
+                    <p>Your account is ready to use. Click below to go to your dashboard.</p>
+                    <button class="primary-btn" onclick="window.location.href='dashboard.html'">
+                        Go to Dashboard
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script src="js/onboarding.js"></script>
+</body>
+</html>
