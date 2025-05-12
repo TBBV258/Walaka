@@ -2090,126 +2090,168 @@ async function setupInvoiceTable() {
     }
 }
 
-async function fetchAndDisplayInvoices(page = 1, limit = 10, filters = {}) {
+async function fetchAndDisplayInvoices(page = 1, limit = 6) {
     try {
-        // Ensure Supabase client is available
         if (!window.supabase) {
-            throw new Error('Supabase client is not initialized');
+            throw new Error('Supabase client not initialized');
         }
 
-        // Initialize query builder
-        let queryBuilder = window.supabase
-            .from('invoices')
-            .select('*', { count: 'exact' });
-
-        // Apply filters
-        if (filters.status && filters.status !== 'all') {
-            queryBuilder = queryBuilder.eq('status', filters.status);
+        const tbody = document.querySelector('#invoicesTable tbody');
+        if (tbody) {
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center">Loading invoices...</td></tr>';
         }
 
-        if (filters.clientId && filters.clientId !== 'all') {
-            queryBuilder = queryBuilder.eq('client_id', filters.clientId);
-        }
-
-        if (filters.dateRange) {
-            const now = new Date();
-            const startDate = new Date();
-
-            switch (filters.dateRange) {
-                case 'today':
-                    startDate.setHours(0, 0, 0, 0);
-                    queryBuilder = queryBuilder.gte('created_at', startDate.toISOString())
-                        .lte('created_at', now.toISOString());
-                    break;
-                case 'week':
-                    startDate.setDate(startDate.getDate() - 7);
-                    queryBuilder = queryBuilder.gte('created_at', startDate.toISOString());
-                    break;
-                case 'month':
-                    startDate.setMonth(startDate.getMonth() - 1);
-                    queryBuilder = queryBuilder.gte('created_at', startDate.toISOString());
-                    break;
-                case 'quarter':
-                    startDate.setMonth(startDate.getMonth() - 3);
-                    queryBuilder = queryBuilder.gte('created_at', startDate.toISOString());
-                    break;
-            }
-        }
-
-        if (filters.search) {
-            queryBuilder = queryBuilder.or(
-                `invoice_number.ilike.%${filters.search}%,client_name.ilike.%${filters.search}%`
-            );
-        }
-
-        // Add pagination
+        // Calculate pagination range
         const from = (page - 1) * limit;
-        const to = from + limit - 1;
+        const to = from + (limit - 1);
 
-        queryBuilder = queryBuilder
-            .range(from, to)
-            .order('created_at', { ascending: false });
-
-        // Execute query
-        const { data: invoices, error, count } = await queryBuilder;
+        // Fetch invoices with pagination
+        const { data: invoices, count: totalCount, error } = await window.supabase
+            .from('invoices')
+            .select('*, clients(*)', { count: 'exact' })
+            .order('created_at', { ascending: false })
+            .range(from, to);
 
         if (error) throw error;
 
-        // Update table
-        const tbody = document.querySelector('#invoicesTable tbody');
-        if (!tbody) return;
+        // Update table content
+        if (tbody) {
+            tbody.innerHTML = '';
+            
+            if (!invoices || invoices.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center">No invoices found</td></tr>';
+                return;
+            }
 
-        // Clear existing rows
-        tbody.innerHTML = '';
-
-        if (!invoices || invoices.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" class="text-center">No invoices found</td></tr>';
-            return;
+            // Populate table with invoices
+            invoices.forEach(invoice => {
+                const row = `
+                    <tr data-invoice-id="${invoice.id}">
+                        <td>${invoice.invoice_number || ''}</td>
+                        <td>${invoice.customer_name || ''}</td>
+                        <td>${formatDate(invoice.issue_date)}</td>
+                        <td>${formatDate(invoice.due_date)}</td>
+                        <td>${formatCurrency(invoice.total_amount)}</td>
+                        <td><span class="status ${invoice.status?.toLowerCase() || 'pending'}">${invoice.status || 'Pending'}</span></td>
+                        <td class="actions">
+                            <button class="action-btn view-btn" data-invoice="${invoice.invoice_number}" title="View">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="action-btn send-btn" title="Send">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                            <button class="action-btn more-btn" title="More">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                tbody.insertAdjacentHTML('beforeend', row);
+            });
         }
 
-        // Add invoice rows
-        invoices.forEach(invoice => {
-            const row = `
-                <tr>
-                    <td>${invoice.invoice_number || ''}</td>
-                    <td>${invoice.customer_name || ''}</td>
-                    <td>${formatDate(invoice.issue_date)}</td>
-                    <td>${formatDate(invoice.due_date)}</td>
-                    <td>${formatCurrency(invoice.total_amount)}</td>
-                    <td><span class="status ${invoice.status?.toLowerCase()}">${invoice.status || 'Pending'}</span></td>
-                    <td class="actions">
-                        <button class="action-btn view-btn" data-invoice="${invoice.invoice_number}" title="View">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        <button class="action-btn send-btn" title="Send">
-                            <i class="fas fa-paper-plane"></i>
-                        </button>
-                        <button class="action-btn more-btn" title="More">
-                            <i class="fas fa-ellipsis-v"></i>
-                        </button>
-                    </td>
-                </tr>
-            `;
-            tbody.insertAdjacentHTML('beforeend', row);
-        });
-
-        // Update pagination if count is available
-        if (count !== null) {
-            updatePaginationDisplay(page, Math.ceil(count / limit), count);
-        }
-
-        // Setup action buttons for new rows
+        // Update pagination display
+        updatePaginationControls(page, totalCount, limit);
         setupActionButtons();
 
     } catch (error) {
         console.error('Error fetching invoices:', error);
-        const tbody = document.querySelector('#invoicesTable tbody');
         if (tbody) {
-            tbody.innerHTML = '<tr><td colspan="7" class="text-center">Error loading invoices</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-error">Error loading invoices</td></tr>';
         }
-        throw error;
     }
 }
+
+function updatePaginationControls(currentPage, totalItems, limit) {
+    const totalPages = Math.ceil(totalItems / limit);
+    const controls = document.querySelector('.page-controls');
+    const pageInfo = document.querySelector('.page-info');
+    
+    if (!controls || !pageInfo) return;
+
+    // Update page info text
+    const start = ((currentPage - 1) * limit) + 1;
+    const end = Math.min(currentPage * limit, totalItems);
+    pageInfo.textContent = `Showing ${start}-${end} of ${totalItems} invoices`;
+
+    // Generate pagination buttons HTML
+    let buttonsHtml = `
+        <button class="pagination-btn ${currentPage === 1 ? 'disabled' : ''}" 
+                ${currentPage === 1 ? 'disabled' : ''}>
+            <i class="fas fa-chevron-left"></i>
+        </button>
+    `;
+
+    // Logic for showing page numbers
+    for (let i = 1; i <= totalPages; i++) {
+        // Always show first page, last page, and pages around current page
+        if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+            buttonsHtml += `
+                <button class="pagination-btn ${i === currentPage ? 'active' : ''}">${i}</button>
+            `;
+        } else if (i === currentPage - 2 || i === currentPage + 2) {
+            buttonsHtml += '<span class="pagination-ellipsis">...</span>';
+        }
+    }
+
+    buttonsHtml += `
+        <button class="pagination-btn ${currentPage === totalPages ? 'disabled' : ''}"
+                ${currentPage === totalPages ? 'disabled' : ''}>
+            <i class="fas fa-chevron-right"></i>
+        </button>
+    `;
+
+    controls.innerHTML = buttonsHtml;
+
+    // Add click handlers for pagination
+    controls.addEventListener('click', (e) => {
+        const button = e.target.closest('.pagination-btn');
+        if (!button || button.disabled) return;
+
+        let newPage = currentPage;
+
+        if (button.querySelector('.fa-chevron-left')) {
+            newPage = currentPage - 1;
+        } else if (button.querySelector('.fa-chevron-right')) {
+            newPage = currentPage + 1;
+        } else {
+            newPage = parseInt(button.textContent);
+        }
+
+        if (newPage >= 1 && newPage <= totalPages) {
+            fetchAndDisplayInvoices(newPage, limit);
+        }
+    });
+}
+
+// Set up real-time subscription for pagination updates
+function setupPaginationSubscription() {
+    const subscription = window.supabase
+        .channel('public:invoices')
+        .on('postgres_changes', 
+            {
+                event: '*',
+                schema: 'public',
+                table: 'invoices'
+            }, 
+            () => {
+                // Refresh current page when data changes
+                const currentPage = parseInt(document.querySelector('.pagination-btn.active')?.textContent) || 1;
+                fetchAndDisplayInvoices(currentPage);
+            }
+        )
+        .subscribe();
+
+    return () => {
+        subscription.unsubscribe();
+    };
+}
+
+// Initialize pagination when document loads
+document.addEventListener('DOMContentLoaded', () => {
+    fetchAndDisplayInvoices(1);
+    setupPaginationSubscription();
+});
 
 function showError(message) {
     const tbody = document.querySelector('#invoicesTable tbody');
@@ -3227,6 +3269,239 @@ function setupActionButtons() {
         });
     });
 }
+
+// ...existing code...
+
+let currentPage = 1;
+const ITEMS_PER_PAGE = 6;
+let totalInvoices = 0;
+let currentFilters = {
+    status: 'all',
+    dateRange: 'all',
+    client: 'all',
+    search: ''
+};
+
+async function fetchAndDisplayInvoices(page = 1, filters = currentFilters) {
+    try {
+        // Show loading state
+        const tbody = document.querySelector('#invoicesTable tbody');
+        if (tbody) {
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center">Loading invoices...</td></tr>';
+        }
+
+        // Calculate pagination range
+        const from = (page - 1) * ITEMS_PER_PAGE;
+        const to = from + (ITEMS_PER_PAGE - 1);
+
+        // Build query with filters
+        let query = supabase
+            .from('invoices')
+            .select('*', { count: 'exact' });
+
+        // Apply filters
+        if (filters.status && filters.status !== 'all') {
+            query = query.eq('status', filters.status);
+        }
+        if (filters.client && filters.client !== 'all') {
+            query = query.eq('client_id', filters.client);
+        }
+        if (filters.search) {
+            query = query.or(`invoice_number.ilike.%${filters.search}%,client_name.ilike.%${filters.search}%`);
+        }
+        if (filters.dateRange && filters.dateRange !== 'all') {
+            const dateFilter = getDateRangeFilter(filters.dateRange);
+            if (dateFilter) {
+                query = query.gte('issue_date', dateFilter.start).lte('issue_date', dateFilter.end);
+            }
+        }
+
+        // Add pagination
+        const { data: invoices, count, error } = await query
+            .range(from, to)
+            .order('issue_date', { ascending: false });
+
+        if (error) throw error;
+
+        // Update total count
+        totalInvoices = count || 0;
+        currentPage = page;
+
+        // Update table content
+        if (tbody) {
+            tbody.innerHTML = '';
+
+            if (!invoices || invoices.length === 0) {
+                showNoResults('No invoices found matching your criteria');
+                return;
+            }
+
+            // Populate table
+            invoices.forEach(invoice => {
+                const row = `
+                    <tr data-invoice-id="${invoice.id}">
+                        <td>${invoice.invoice_number}</td>
+                        <td>${invoice.client_name}</td>
+                        <td>${formatDate(invoice.issue_date)}</td>
+                        <td>${formatDate(invoice.due_date)}</td>
+                        <td>${formatCurrency(invoice.total_amount)}</td>
+                        <td><span class="status ${invoice.status?.toLowerCase()}">${invoice.status}</span></td>
+                        <td class="actions">
+                            <button class="action-btn view-btn" data-invoice="${invoice.invoice_number}">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="action-btn send-btn">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                            <button class="action-btn more-btn">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                tbody.insertAdjacentHTML('beforeend', row);
+            });
+
+            // Update pagination controls
+            updatePaginationControls(page, Math.ceil(totalInvoices / ITEMS_PER_PAGE));
+        }
+
+        // Initialize action buttons
+        setupActionButtons();
+
+    } catch (error) {
+        console.error('Error fetching invoices:', error);
+        showError('Error loading invoices');
+    }
+}
+
+function updatePaginationControls(currentPage, totalPages) {
+    const controls = document.querySelector('.page-controls');
+    const pageInfo = document.querySelector('.page-info');
+    
+    if (!controls || !pageInfo) return;
+
+    const start = ((currentPage - 1) * ITEMS_PER_PAGE) + 1;
+    const end = Math.min(currentPage * ITEMS_PER_PAGE, totalInvoices);
+    pageInfo.textContent = `Showing ${start}-${end} of ${totalInvoices} invoices`;
+
+    // Generate pagination buttons
+    let buttonsHtml = `
+        <button class="pagination-btn prev-page" ${currentPage === 1 ? 'disabled' : ''}>
+            <i class="fas fa-chevron-left"></i>
+        </button>
+    `;
+
+    // Add page numbers
+    for (let i = 1; i <= totalPages; i++) {
+        if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+            buttonsHtml += `
+                <button class="pagination-btn ${i === currentPage ? 'active' : ''}">${i}</button>
+            `;
+        } else if (i === currentPage - 2 || i === currentPage + 2) {
+            buttonsHtml += '<span class="pagination-ellipsis">...</span>';
+        }
+    }
+
+    buttonsHtml += `
+        <button class="pagination-btn next-page" ${currentPage === totalPages ? 'disabled' : ''}>
+            <i class="fas fa-chevron-right"></i>
+        </button>
+    `;
+
+    controls.innerHTML = buttonsHtml;
+
+    // Add click handlers
+    controls.querySelectorAll('.pagination-btn').forEach(button => {
+        button.addEventListener('click', () => {
+            if (button.classList.contains('prev-page')) {
+                if (currentPage > 1) fetchAndDisplayInvoices(currentPage - 1);
+            } else if (button.classList.contains('next-page')) {
+                if (currentPage < totalPages) fetchAndDisplayInvoices(currentPage + 1);
+            } else {
+                const page = parseInt(button.textContent);
+                if (page !== currentPage) fetchAndDisplayInvoices(page);
+            }
+        });
+    });
+}
+
+// Real-time subscription for updates
+function setupInvoiceSubscription() {
+    const subscription = supabase
+        .channel('public:invoices')
+        .on('postgres_changes', 
+            {
+                event: '*',
+                schema: 'public',
+                table: 'invoices'
+            }, 
+            () => {
+                // Refresh current page when data changes
+                fetchAndDisplayInvoices(currentPage, currentFilters);
+            }
+        )
+        .subscribe();
+
+    return () => subscription.unsubscribe();
+}
+
+// Update filter handling
+function handleFilterChange(newFilters) {
+    currentFilters = { ...currentFilters, ...newFilters };
+    currentPage = 1; // Reset to first page when filters change
+    fetchAndDisplayInvoices(1, currentFilters);
+}
+
+// Helper function for date range filters
+function getDateRangeFilter(range) {
+    const today = new Date();
+    const start = new Date();
+    
+    switch (range) {
+        case 'today':
+            start.setHours(0, 0, 0, 0);
+            return { start: start.toISOString(), end: today.toISOString() };
+        case 'week':
+            start.setDate(today.getDate() - 7);
+            return { start: start.toISOString(), end: today.toISOString() };
+        case 'month':
+            start.setMonth(today.getMonth() - 1);
+            return { start: start.toISOString(), end: today.toISOString() };
+        case 'quarter':
+            start.setMonth(today.getMonth() - 3);
+            return { start: start.toISOString(), end: today.toISOString() };
+        default:
+            return null;
+    }
+}
+
+// Initialize pagination on page load
+document.addEventListener('DOMContentLoaded', () => {
+    fetchAndDisplayInvoices(1);
+    setupInvoiceSubscription();
+    
+    // Set up filter event listeners
+    document.querySelectorAll('.filter-select').forEach(filter => {
+        filter.addEventListener('change', () => {
+            handleFilterChange({
+                [filter.id.replace('Filter', '')]: filter.value
+            });
+        });
+    });
+    
+    // Set up search handler with debounce
+    const searchInput = document.getElementById('searchInvoices');
+    if (searchInput) {
+        let debounceTimeout;
+        searchInput.addEventListener('input', () => {
+            clearTimeout(debounceTimeout);
+            debounceTimeout = setTimeout(() => {
+                handleFilterChange({ search: searchInput.value });
+            }, 300);
+        });
+    }
+});
 
 // ...existing code...
 
