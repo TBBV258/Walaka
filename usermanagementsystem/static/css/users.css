@@ -1,0 +1,498 @@
+/* User Management Styles */
+
+/* Main container styling */
+.users-table-container {
+    background: rgb(255, 255, 255);
+    border-radius: var(--card-radius);
+    padding: 1.5rem;
+    box-shadow: var(--box-shadow);
+    margin-bottom: 1.5rem;
+}
+
+/* Filter controls */
+.filter-controls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 0.5rem;
+}
+
+.filter-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.filter-group label {
+    font-size: 0.85rem;
+    color: #555;
+}
+
+.filter-select {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    color: #333;
+    background-color: #f9f9f9;
+}
+
+#resetFiltersBtn {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+}
+
+/* User role badges */
+.role-badge {
+    display: inline-block;
+    padding: 0.35rem 0.7rem;
+    border-radius: 1rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    text-align: center;
+    min-width: 80px;
+}
+
+.role-badge.superuser {
+    background-color: #e6e9ff;
+    color: #4f46e5;
+}
+
+.role-badge.admin {
+    background-color: #e6f7ff;
+    color: #0284c7;
+}
+
+.role-badge.basic {
+    background-color: #f0f0f0;
+    color: #555;
+}
+
+/* User status indicator */
+.user-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.status-indicator {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.status-indicator.active {
+    background-color: #3bb077;
+}
+
+.status-indicator.inactive {
+    background-color: #e55353;
+}
+
+.status-text {
+    font-size: 0.85rem;
+}
+
+/* User actions */
+.user-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.user-action-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: none;
+    background-color: transparent;
+    color: #555;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.user-action-btn:hover {
+    background-color: #f0f0f0;
+}
+
+.edit-user-btn:hover {
+    color: var(--primary-color);
+}
+
+.deactivate-user-btn:hover {
+    color: #e55353;
+}
+
+.reactivate-user-btn:hover {
+    color: #3bb077;
+}
+
+/* Empty state */
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #666;
+}
+
+.empty-state i {
+    font-size: 3rem;
+    color: #ddd;
+    margin-bottom: 1rem;
+}
+
+.empty-state h3 {
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+    color: #555;
+}
+
+.empty-state p {
+    font-size: 0.9rem;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+/* Form styling for user creation/editing */
+.form-section {
+    margin-bottom: 1.5rem;
+}
+
+.form-section h3 {
+    font-size: 1.1rem;
+    color: #333;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #eee;
+}
+
+.form-row {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.form-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    font-size: 0.85rem;
+    color: #555;
+    margin-bottom: 0.4rem;
+    display: flex;
+    align-items: center;
+}
+
+.required {
+    color: #e55353;
+    margin-left: 0.25rem;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    transition: border-color 0.2s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    border-color: var(--primary-color);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(0, 126, 199, 0.1);
+}
+
+.validation-message {
+    color: #e55353;
+    font-size: 0.8rem;
+    margin-top: 0.25rem;
+    min-height: 1rem;
+}
+
+/* Password toggle and strength meter */
+.password-input-container {
+    position: relative;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #777;
+}
+
+.password-strength {
+    margin-top: 0.5rem;
+}
+
+.strength-meter {
+    height: 4px;
+    background-color: #eee;
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 0.25rem;
+}
+
+.strength-meter-fill {
+    height: 100%;
+    width: 0;
+    transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+.strength-meter-fill.weak {
+    width: 25%;
+    background-color: #e55353;
+}
+
+.strength-meter-fill.medium {
+    width: 50%;
+    background-color: #f0ad4e;
+}
+
+.strength-meter-fill.strong {
+    width: 75%;
+    background-color: #3bb077;
+}
+
+.strength-meter-fill.very-strong {
+    width: 100%;
+    background-color: #4f46e5;
+}
+
+#strengthText {
+    font-size: 0.75rem;
+    color: #777;
+}
+
+/* Toggle switch for user status */
+.toggle-switch-container {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 24px;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .toggle-slider {
+    background-color: var(--primary-color);
+}
+
+input:focus + .toggle-slider {
+    box-shadow: 0 0 1px var(--primary-color);
+}
+
+input:checked + .toggle-slider:before {
+    transform: translateX(26px);
+}
+
+#statusText {
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+/* Role description */
+.role-description {
+    margin-top: 0.5rem;
+    padding: 0.75rem;
+    background-color: #f9f9f9;
+    border-left: 3px solid #ddd;
+    font-size: 0.8rem;
+    color: #666;
+    border-radius: 0 4px 4px 0;
+}
+
+.role-description.superuser {
+    border-left-color: #4f46e5;
+}
+
+.role-description.admin {
+    border-left-color: #0284c7;
+}
+
+.role-description.basic {
+    border-left-color: #555;
+}
+
+/* Modal styles */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1001;
+    width: 800px;
+    max-width: 90vw;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-content {
+    background-color: white;
+    border-radius: var(--card-radius);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid #eee;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: #333;
+}
+
+.close-modal {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #999;
+    cursor: pointer;
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    padding: 1.5rem;
+    border-top: 1px solid #eee;
+}
+
+/* Form grid */
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+}
+
+/* Confirmation modal */
+.confirm-modal {
+    max-width: 500px;
+}
+
+.confirm-icon {
+    display: flex;
+    justify-content: center;
+    font-size: 3rem;
+    color: #f0ad4e;
+    margin-bottom: 1rem;
+}
+
+#confirmMessage {
+    text-align: center;
+    font-size: 1rem;
+    color: #333;
+}
+
+.danger-btn {
+    background-color: #e55353;
+    color: white;
+}
+
+.danger-btn:hover {
+    background-color: #d83b3b;
+}
+
+/* Responsive design adjustments */
+@media (max-width: 992px) {
+    .filter-controls {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-row {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 768px) {
+    .filter-controls {
+        flex-wrap: wrap;
+    }
+    
+    .data-table th:nth-child(5),
+    .data-table td:nth-child(5),
+    .data-table th:nth-child(6),
+    .data-table td:nth-child(6) {
+        display: none;
+    }
+}
+
+@media (max-width: 576px) {
+    .data-table th:nth-child(3),
+    .data-table td:nth-child(3) {
+        display: none;
+    }
+}

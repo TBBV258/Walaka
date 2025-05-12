@@ -601,12 +601,69 @@
                             <h3>Client Information</h3>
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label for="client-list">Client Name</label>
-                                    <input type="text" id="client-list" required autocomplete="off">
+                                    <label for="client-search">Client Name/Company</label>
+                                    <div class="client-input-wrapper">
+                                        <input type="text" id="client-search" placeholder="Search client..." autocomplete="off">
+                                        <div id="client-suggestions" class="client-suggestions"></div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <button type="button" id="new-client-btn" class="btn secondary-btn">
+                                        <i class="fas fa-plus"></i> New Client
+                                    </button>
                                 </div>
                             </div>
-                            <div id="expand-client-form" style="display: none;">
-                                <!-- New client form fields go here -->
+
+                            <div id="selected-client-info" style="display: none;">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>NUIT</label>
+                                        <input type="text" id="client-nuit" readonly>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Email</label>
+                                        <input type="email" id="client-email" readonly>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>Address</label>
+                                        <textarea id="client-address" readonly rows="2"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="new-client-form" style="display: none;">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="new-client-name">Company Name</label>
+                                        <input type="text" id="new-client-name" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="new-client-nuit">NUIT</label>
+                                        <input type="text" id="new-client-nuit" required>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="new-client-email">Email</label>
+                                        <input type="email" id="new-client-email" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="new-client-phone">Phone</label>
+                                        <input type="tel" id="new-client-phone">
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="new-client-address">Address</label>
+                                        <textarea id="new-client-address" rows="2" required></textarea>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <button type="button" id="save-client-btn" class="btn primary-btn">Save Client</button>
+                                    <button type="button" id="cancel-client-btn" class="btn secondary-btn">Cancel</button>
+                                </div>
                             </div>
                         </div>
                         <div class="form-section">
@@ -957,6 +1014,102 @@
         );
 
         window.supabase = supabase;
+        
+        // Client handling functions
+        async function searchClients(searchTerm) {
+            const { data, error } = await supabase
+                .from('clients')
+                .select('*')
+                .ilike('name', `%${searchTerm}%`)
+                .limit(5);
+            
+            if (error) {
+                console.error('Error searching clients:', error);
+                return [];
+            }
+            
+            return data;
+        }
+
+        function displayClientSuggestions(clients) {
+            const suggestionsDiv = document.getElementById('client-suggestions');
+            suggestionsDiv.innerHTML = '';
+            
+            clients.forEach(client => {
+                const div = document.createElement('div');
+                div.className = 'suggestion-item';
+                div.textContent = `${client.name} (${client.nuit})`;
+                div.addEventListener('click', () => selectClient(client));
+                suggestionsDiv.appendChild(div);
+            });
+            
+            suggestionsDiv.style.display = clients.length ? 'block' : 'none';
+        }
+
+        function selectClient(client) {
+            document.getElementById('client-search').value = client.name;
+            document.getElementById('client-nuit').value = client.nuit;
+            document.getElementById('client-email').value = client.email;
+            document.getElementById('client-address').value = client.address;
+            
+            document.getElementById('client-suggestions').style.display = 'none';
+            document.getElementById('selected-client-info').style.display = 'block';
+            document.getElementById('new-client-form').style.display = 'none';
+        }
+
+        // Event Listeners
+        document.getElementById('client-search').addEventListener('input', async (e) => {
+            const searchTerm = e.target.value.trim();
+            if (searchTerm.length >= 2) {
+                const clients = await searchClients(searchTerm);
+                displayClientSuggestions(clients);
+            } else {
+                document.getElementById('client-suggestions').style.display = 'none';
+            }
+        });
+
+        document.getElementById('new-client-btn').addEventListener('click', () => {
+            document.getElementById('new-client-form').style.display = 'block';
+            document.getElementById('selected-client-info').style.display = 'none';
+        });
+
+        document.getElementById('cancel-client-btn').addEventListener('click', () => {
+            document.getElementById('new-client-form').style.display = 'none';
+            document.getElementById('new-client-form').reset();
+        });
+
+        document.getElementById('save-client-btn').addEventListener('click', async () => {
+            const newClient = {
+                name: document.getElementById('new-client-name').value,
+                nuit: document.getElementById('new-client-nuit').value,
+                email: document.getElementById('new-client-email').value,
+                phone: document.getElementById('new-client-phone').value,
+                address: document.getElementById('new-client-address').value
+            };
+
+            const { data, error } = await supabase
+                .from('clients')
+                .insert([newClient])
+                .select()
+                .single();
+
+            if (error) {
+                console.error('Error saving client:', error);
+                alert('Error saving client');
+                return;
+            }
+
+            selectClient(data);
+            document.getElementById('new-client-form').reset();
+            document.getElementById('new-client-form').style.display = 'none';
+        });
+
+        // Close suggestions when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.client-input-wrapper')) {
+                document.getElementById('client-suggestions').style.display = 'none';
+            }
+        });
     </script>
 </body>
 </html>

@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WALAKA - User Management</title>
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts - Inter -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/users.css') }}">
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar Menu -->
+        <nav class="sidebar">
+            <div class="logo">
+                <i class="fas fa-chart-line"></i>
+                <span>WALAKA</span>
+            </div>
+            
+            <div class="nav-menu">
+                <a href="dashboard.html" class="nav-item">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+                
+                <div class="nav-section">
+                    <h3>Invoicing</h3>
+                </div>
+                <a href="invoices.html" class="nav-item">
+                    <i class="fas fa-file-invoice-dollar"></i>
+                    <span>Invoices</span>
+                </a>
+
+                <a href="clients/clients.html" class="nav-item">
+                    <i class="fas fa-users"></i>
+                    <span>Clients</span>
+                </a>
+
+                <a href="products.html" class="nav-item">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span>Products</span>
+                </a>
+                
+                <div class="nav-section">
+                    <h3>Commercial</h3>
+                </div>
+                <a href="#" class="nav-item">
+                    <i class="fas fa-boxes"></i>
+                    <span>Stock</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <i class="fas fa-truck"></i>
+                    <span>Suppliers</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <i class="fas fa-exchange-alt"></i>
+                    <span>Movements</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <i class="fas fa-money-bill-wave"></i>
+                    <span>Expenses</span>
+                </a>
+                <div class="nav-section">
+                    <h3>Accounting </h3>
+                 <a href="#" class="nav-item">
+                      <i class="fas fa-book"></i>
+                      <span>Entries</span> 
+                    </a>
+                    <a href="#" class="nav-item">
+                      <i class="fas fa-list-alt"></i>
+                     <span> Chart of Accounts</span>
+                    </a>
+                    <a href="#" class="nav-item">
+                      <i class="fas fa-percent"></i>
+                      <span>Taxes</span> 
+                    </a>
+                  </div>
+
+                <div class="nav-section">
+                    <h3>Finances</h3>
+                </div>
+               
+                <a href="#" class="nav-item">
+                    <i class="fas fa-chart-pie"></i>
+                    <span>Reports</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <i class="fas fa-chart-line"></i>
+                    Key Metrics
+                  </a>
+
+                <div class="nav-section">
+                    <h3>Settings</h3>
+                </div>
+                <a href="settings.html" class="nav-item">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </a>
+                <a href="/users" class="nav-item active">
+                    <i class="fas fa-user-shield"></i>
+                    <span>User Management</span>
+                </a>
+                <a href="profile.html" class="nav-item">
+                    <i class="fas fa-user-cog"></i>
+                    <span>Account</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <i class="fas fa-question-circle"></i>
+                    <span>Help</span>
+                </a>
+            </div>
+        </nav>
+        
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Top Bar -->
+            <div class="top-bar">
+                <button class="menu-toggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                
+                <div class="search-bar">
+                    <input type="text" id="userSearchInput" placeholder="Search users...">
+                </div>
+                
+                <div class="user-menu">
+                    <div class="notification-bell">
+                        <i class="fas fa-bell"></i>
+                        <span class="badge">3</span>
+                    </div>
+                    
+                    <div class="user-profile">
+                        <div class="avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <span>John Doe</span>
+                        <div class="dropdown-menu">
+                            <a href="#">
+                                <i class="fas fa-user-circle"></i> My Profile
+                            </a>
+                            <a href="#">
+                                <i class="fas fa-cog"></i> Settings
+                            </a>
+                            <a href="#">
+                                <i class="fas fa-sign-out-alt"></i> Logout
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- User Management Dashboard Content -->
+            <div class="page-header">
+                <div>
+                    <h2>User Management</h2>
+                    <p class="subtitle">Create, manage, and modify user accounts and permissions</p>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn primary-btn" id="createUserBtn">
+                        <i class="fas fa-plus"></i> Create User
+                    </button>
+                </div>
+            </div>
+            
+            <!-- User Management Metrics -->
+            <div class="metrics-grid">
+                <div class="metric-card" id="totalUsersCard">
+                    <div class="metric-header">
+                        <i class="fas fa-users"></i>
+                        <span>Total Users</span>
+                    </div>
+                    <div class="metric-value" id="totalUsersValue">0</div>
+                    <div class="metric-footer">
+                        <span>Updated just now</span>
+                    </div>
+                </div>
+                
+                <div class="metric-card" id="activeUsersCard">
+                    <div class="metric-header">
+                        <i class="fas fa-user-check"></i>
+                        <span>Active Users</span>
+                    </div>
+                    <div class="metric-value" id="activeUsersValue">0</div>
+                    <div class="metric-footer">
+                        <span>Out of total users</span>
+                    </div>
+                </div>
+                
+                <div class="metric-card" id="superusersCard">
+                    <div class="metric-header">
+                        <i class="fas fa-user-shield"></i>
+                        <span>Superusers</span>
+                    </div>
+                    <div class="metric-value" id="superusersValue">0</div>
+                    <div class="metric-footer">
+                        <span>Full permission users</span>
+                    </div>
+                </div>
+                
+                <div class="metric-card" id="adminUsersCard">
+                    <div class="metric-header">
+                        <i class="fas fa-user-tie"></i>
+                        <span>Admin Users</span>
+                    </div>
+                    <div class="metric-value" id="adminUsersValue">0</div>
+                    <div class="metric-footer">
+                        <span>Limited permission users</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- User Management Table Container -->
+            <div class="users-table-container">
+                <div class="table-header">
+                    <h3>All Users</h3>
+                    <div class="filter-controls">
+                        <div class="filter-group">
+                            <label for="roleFilter">Role:</label>
+                            <select id="roleFilter" class="filter-select">
+                                <option value="all">All Roles</option>
+                                <option value="superuser">Superuser</option>
+                                <option value="admin">Admin</option>
+                                <option value="basic">Basic</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label for="statusFilter">Status:</label>
+                            <select id="statusFilter" class="filter-select">
+                                <option value="all">All Status</option>
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                            </select>
+                        </div>
+                        <button id="resetFiltersBtn" class="btn secondary-btn">
+                            <i class="fas fa-sync-alt"></i> Reset
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="data-table" id="usersTable">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Status</th>
+                                <th>Last Login</th>
+                                <th>Created On</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody">
+                            <!-- User rows will be populated here by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="pagination" id="usersPagination">
+                    <div class="page-info">
+                        Showing <span id="startRecord">0</span> to <span id="endRecord">0</span> of <span id="totalRecords">0</span> users
+                    </div>
+                    <div class="page-controls" id="paginationControls">
+                        <!-- Pagination controls will be added by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal for Create/Edit User -->
+    <div class="modal-overlay" id="userModalOverlay"></div>
+    <div class="modal" id="userModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Create New User</h2>
+                <button class="close-modal" id="closeUserModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="userForm">
+                    <input type="hidden" id="userId" value="">
+                    
+                    <div class="form-grid">
+                        <div class="form-section">
+                            <h3>User Information</h3>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="fullName">Full Name <span class="required">*</span></label>
+                                    <input type="text" id="fullName" name="fullName" required>
+                                    <div class="validation-message" id="fullNameError"></div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="email">Email Address <span class="required">*</span></label>
+                                    <input type="email" id="email" name="email" required>
+                                    <div class="validation-message" id="emailError"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="username">Username <span class="required">*</span></label>
+                                    <input type="text" id="username" name="username" required>
+                                    <div class="validation-message" id="usernameError"></div>
+                                </div>
+                                <div class="form-group password-group" id="passwordGroup">
+                                    <label for="password">Password <span class="required passwordRequired">*</span></label>
+                                    <div class="password-input-container">
+                                        <input type="password" id="password" name="password">
+                                        <button type="button" class="toggle-password" id="togglePassword">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                    <div class="password-strength" id="passwordStrength">
+                                        <div class="strength-meter">
+                                            <div class="strength-meter-fill" id="strengthMeter"></div>
+                                        </div>
+                                        <span id="strengthText">Password strength</span>
+                                    </div>
+                                    <div class="validation-message" id="passwordError"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-section">
+                            <h3>Role & Permissions</h3>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="userRole">User Role <span class="required">*</span></label>
+                                    <select id="userRole" name="userRole" required>
+                                        <option value="">Select a role</option>
+                                        <option value="superuser">Superuser (All permissions)</option>
+                                        <option value="admin">Admin (Create/Edit, No Delete)</option>
+                                        <option value="basic">Basic (Invoice Management Only)</option>
+                                    </select>
+                                    <div class="role-description" id="roleDescription">
+                                        <!-- Role description will be filled by JavaScript -->
+                                    </div>
+                                    <div class="validation-message" id="userRoleError"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-section" id="statusSection">
+                            <h3>Account Status</h3>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <div class="toggle-switch-container">
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" id="isActive" name="isActive" checked>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                        <span id="statusText">Active</span>
+                                    </div>
+                                    <div class="validation-message" id="isActiveError"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn secondary-btn" id="cancelUserBtn">Cancel</button>
+                <button class="btn primary-btn" id="saveUserBtn">Save User</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Confirmation Modal -->
+    <div class="modal-overlay" id="confirmModalOverlay"></div>
+    <div class="modal" id="confirmModal">
+        <div class="modal-content confirm-modal">
+            <div class="modal-header">
+                <h2>Confirm Action</h2>
+                <button class="close-modal" id="closeConfirmModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="confirm-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <p id="confirmMessage">Are you sure you want to proceed with this action?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn secondary-btn" id="cancelConfirmBtn">Cancel</button>
+                <button class="btn danger-btn" id="confirmActionBtn">Confirm</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Custom JavaScript -->
+    <script src="{{ url_for('static', filename='js/users.js') }}"></script>
+</body>
+</html>
