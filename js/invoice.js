@@ -3505,3 +3505,209 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ...existing code...
 
+function setupActionButtons() {
+    // View Button (Opens PDF)
+    document.querySelectorAll('.view-btn').forEach(btn => {
+        btn.addEventListener('click', async function() {
+            const invoiceNumber = this.dataset.invoice;
+            try {
+                const { data: invoice, error } = await window.supabase
+                    .from('invoices')
+                    .select('pdf_url')
+                    .eq('invoice_number', invoiceNumber)
+                    .single();
+                
+                if (error) throw error;
+                
+                if (invoice?.pdf_url) {
+                    // Open PDF in a new window
+                    const previewContainer = document.getElementById('invoicePreviewContent');
+                    if (previewContainer) {
+                        previewContainer.innerHTML = `
+                            <iframe src="${invoice.pdf_url}" width="100%" height="600px" frameborder="0"></iframe>
+                        `;
+                        openModal('viewInvoiceModal');
+                    }
+                } else {
+                    throw new Error('PDF not found');
+                }
+            } catch (error) {
+                console.error('Error viewing invoice:', error);
+                showNotification('Error opening invoice PDF');
+            }
+        });
+    });
+
+    // Send Button (Email Modal)
+    document.querySelectorAll('.send-btn').forEach(btn => {
+        btn.addEventListener('click', async function() {
+            const row = this.closest('tr');
+            const invoiceNumber = row.querySelector('.view-btn').dataset.invoice;
+            
+            // Get client email from database
+            try {
+                const invoice = await fetchInvoiceForEmail(invoiceNumber);
+                if (!invoice) throw new Error('Invoice not found');
+
+                const emailModal = document.getElementById('emailInvoiceModal');
+                const emailInput = document.getElementById('emailTo');
+                const subjectInput = document.getElementById('emailSubject');
+                
+                if (emailInput) {
+                    emailInput.value = invoice.clients?.email || '';
+                }
+                
+                if (subjectInput) {
+                    subjectInput.value = `Invoice ${invoiceNumber}`;
+                }
+
+                openModal('emailInvoiceModal');
+                setupEmailFormHandler(emailModal, invoiceNumber);
+
+            } catch (error) {
+                console.error('Error preparing email:', error);
+                showNotification('Error preparing email: ' + error.message);
+            }
+        });
+    });
+
+    // More Button (Status Change Dropdown)
+    document.querySelectorAll('.more-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            
+            // Remove any existing dropdowns
+            document.querySelectorAll('.status-dropdown').forEach(d => d.remove());
+            
+            const row = this.closest('tr');
+            const invoiceId = row.dataset.invoiceId;
+            const invoiceNumber = row.querySelector('.view-btn').dataset.invoice;
+            
+            // Create dropdown
+            const dropdown = document.createElement('div');
+            dropdown.className = 'status-dropdown';
+            dropdown.innerHTML = `
+                <div class="dropdown-item" data-status="paid">
+                    <i class="fas fa-check-circle text-success"></i> Mark as Paid
+                </div>
+                <div class="dropdown-item" data-status="pending">
+                    <i class="fas fa-clock text-warning"></i> Mark as Pending
+                </div>
+                <div class="dropdown-item" data-status="overdue">
+                    <i class="fas fa-exclamation-circle text-danger"></i> Mark as Overdue
+                </div>
+                <div class="dropdown-item" data-status="cancelled">
+                    <i class="fas fa-ban text-muted"></i> Mark as Cancelled
+                </div>
+            `;
+            
+            // Position dropdown
+            const rect = this.getBoundingClientRect();
+            dropdown.style.position = 'absolute';
+            dropdown.style.top = `${rect.bottom + window.scrollY}px`;
+            dropdown.style.left = `${rect.left}px`;
+            dropdown.style.zIndex = '1000';
+            document.body.appendChild(dropdown);
+            
+            // Handle status changes
+            dropdown.querySelectorAll('.dropdown-item').forEach(item => {
+                item.addEventListener('click', async function() {
+                    const newStatus = this.dataset.status;
+                    try {
+                        const { data, error } = await window.supabase
+                            .from('invoices')
+                            .update({ 
+                                status: newStatus,
+                                updated_at: new Date().toISOString()
+                            })
+                            .eq('invoice_number', invoiceNumber)
+                            .select()
+                            .single();
+                        
+                        if (error) throw error;
+                        
+                        // Update UI
+                        const statusSpan = row.querySelector('.status');
+                        if (statusSpan) {
+                            statusSpan.className = `status ${newStatus}`;
+                            statusSpan.textContent = newStatus.charAt(0).toUpperCase() + newStatus.slice(1);
+                        }
+                        
+                        // Add status change to timeline
+                        await addStatusChangeToTimeline(invoiceNumber, newStatus);
+                        
+                        // Update metrics and charts
+                        await updateMetricsDisplay();
+                        await updateCharts();
+                        
+                        showNotification(`Invoice marked as ${newStatus}`, 'success');
+                    } catch (error) {
+                        console.error('Error updating status:', error);
+                        showNotification('Error updating invoice status', 'error');
+                    } finally {
+                        dropdown.remove();
+                    }
+                });
+            });
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function closeDropdown(e) {
+                if (!dropdown.contains(e.target) && !btn.contains(e.target)) {
+                    dropdown.remove();
+                    document.removeEventListener('click', closeDropdown);
+                }
+            });
+        });
+    });
+}
+
+// Helper function to add status change to timeline
+async function addStatusChangeToTimeline(invoiceNumber, status) {
+    try {
+        const { error } = await window.supabase
+            .from('invoice_timeline')
+            .insert([{
+                invoice_number: invoiceNumber,
+                event_type: 'status_change',
+                title: `Status changed to ${status}`,
+                description: `Invoice status was updated to ${status}`,
+                created_at: new Date().toISOString(),
+                active: true
+            }]);
+
+        if (error) throw error;
+    } catch (error) {
+        console.error('Error adding timeline event:', error);
+    }
+}
+
+// Update showNotification function to support different types
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.innerHTML = `
+        <div class="notification-content">
+            <i class="fas ${getNotificationIcon(type)}"></i>
+            <span>${message}</span>
+        </div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Remove notification after 3 seconds
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+
+function getNotificationIcon(type) {
+    switch (type) {
+        case 'success': return 'fa-check-circle';
+        case 'error': return 'fa-exclamation-circle';
+        case 'warning': return 'fa-exclamation-triangle';
+        default: return 'fa-info-circle';
+    }
+}
+
+// ...existing code...
+
